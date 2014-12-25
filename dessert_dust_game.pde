@@ -6,11 +6,22 @@ int maxD = 200;
 int totalLife = 10000;
 int lifeExpended = 0;
 
+int xOffset = 0;
+long lerpStarted = 0;
+boolean lerping = false;
+int prevOffset = 0;
+int newOffset = 0;
+float lerpMillis = 1000.0;
+
+int screenTarget = 500;
+boolean nextScreenBuilt = false;
 
 void setup() {
   size(1000, 500);
   ball = new Ball(ballStartX, height/2);
   ball.setGroundHeight(height - 50);
+  
+  screenTarget = width - 100;
 
   path = new Path();
   path.addPoint(-20, height/2);
@@ -19,10 +30,22 @@ void setup() {
   path.addPoint(width+20, height/2);
 }
 
+void keyPressed() {
+  if (key == CODED) {
+    if (keyCode == RIGHT) {
+      lerping = true;
+    }
+  }
+}
+
 void draw() {
+  nextScreen();
+  
+  pushMatrix();
+  translate(-xOffset, 0);
+
   background(255);
   path.display();
-  ball.drawGround();
 
   ball.update();
   ball.draw();
@@ -34,13 +57,14 @@ void draw() {
     } else {
       fill(255, 0, 0);
     }
-    dottedLine(ball.pos.x, ball.pos.y, mouseX, mouseY, 20);
+    PVector worldMouse = screenToWorld(new PVector(mouseX, mouseY));
+    dottedLine(worldMouse.x, worldMouse.y, ball.pos.x, ball.pos.y, 20);
     popStyle();
   }
 
   float d = distanceToPath(ball.pos, ball.dir, path);
   lifeExpended += d/20.0;
-  
+
   pushMatrix();
   pushStyle();
   float g = map(d, 0, maxD, 255, 0);
@@ -51,37 +75,83 @@ void draw() {
   text(d, 0, 0);
   popStyle();
   popMatrix();
-  
-  drawLifeBar(10,height-30, width-20, 10);
+
+  popMatrix();
+  ball.drawGround();
+  drawLifeBar(10, height-30, width-20, 10);
 }
 
-void drawLifeBar(int x, int y, int w, int h){
-  pushStyle();
-  println(lifeExpended);
-  float percentLeft = (float)(totalLife-lifeExpended)/totalLife;
+void startLerp(){
+  lerpStarted = millis();
+  prevOffset = xOffset;
+  newOffset = (int)ball.pos.x - ballStartX;
+  lerping = true;
+}
+
+void addPoints(){
   
-  if(percentLeft < 0){
+  
+  path.addPoint( path.getEnd().x + width/4 + random(100), height/2 + random(-200,200));
+  path.addPoint( path.getEnd().x + width/4 + random(100), height/2 + random(-200,200));
+  path.addPoint( path.getEnd().x + width/4 + random(100), height/2 + random(-200,200));
+  path.addPoint( path.getEnd().x + width/4 + random(100), height/2 + random(-200,200));
+  
+ 
+  nextScreenBuilt = true;
+}
+
+void nextScreen() {
+  println("bx: " + worldToScreen(ball.pos).x + " t: " + screenTarget);
+  if(worldToScreen(ball.pos).x >= screenTarget && !lerping){
+    startLerp();
+    if(!nextScreenBuilt){
+      addPoints();
+    }
+  }
+  
+  if (lerping) {
+    float l = lerp(prevOffset, newOffset, (millis() - lerpStarted)/lerpMillis);
+    xOffset = (int)l;
+    if (xOffset >= newOffset) {
+      lerping = false;
+      nextScreenBuilt = false;
+    }
+  }
+}
+
+void drawLifeBar(int x, int y, int w, int h) {
+  pushStyle();
+  float percentLeft = (float)(totalLife-lifeExpended)/totalLife;
+
+  if (percentLeft < 0) {
     percentLeft = 0;
   }
-  println(percentLeft);
-  
-  noStroke();
-  fill(255,0,0);
-  rect(x,y,w,h);
 
-  fill(0,255,0);
-  rect(x,y,w*percentLeft,h);
-  
+  noStroke();
+  fill(255, 0, 0);
+  rect(x, y, w, h);
+
+  fill(0, 255, 0);
+  rect(x, y, w*percentLeft, h);
+
   noFill();
   stroke(0);
-  rect(x,y,w,h);
-  
-  
+  rect(x, y, w, h);
+
+
   popStyle();
 }
 
+PVector worldToScreen(PVector p) {  
+  return PVector.sub(p, new PVector(xOffset, 0));
+}
+
+PVector screenToWorld(PVector p) {
+  return PVector.add(p, new PVector(xOffset, 0));
+}
+
 void mouseReleased() {
-  PVector d = PVector.sub(new PVector(mouseX, mouseY), ball.pos);
+  PVector d = PVector.sub(screenToWorld(new PVector(mouseX, mouseY)), ball.pos);
   float p = map(d.mag(), 0, width+height, 0, 1);
   d.mult(-0.08);
   //println(d.mag());
