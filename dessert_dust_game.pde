@@ -1,18 +1,30 @@
 Ball ball;
+Path path;
+int ballStartX = 100;
+
+int maxD = 200;
+
 
 void setup() {
   size(1000, 500);
-  ball = new Ball(100, 298);
-  //  ball.applyForce(new PVector(1, 0));
+  ball = new Ball(ballStartX, height/2);
   ball.setGroundHeight(height - 50);
+
+  path = new Path();
+  path.addPoint(-20, height/2);
+  path.addPoint(random(0, width/2), random(0, height));
+  path.addPoint(random(width/2, width), random(0, height));
+  path.addPoint(width+20, height/2);
 }
 
 void draw() {
   background(255);
+  path.display();
   ball.drawGround();
 
   ball.update();
   ball.draw();
+
   if (mousePressed) {
     pushStyle();
     if (keyPressed) {
@@ -23,13 +35,26 @@ void draw() {
     dottedLine(ball.pos.x, ball.pos.y, mouseX, mouseY, 20);
     popStyle();
   }
+
+  float d = distanceToPath(ball.pos, ball.dir, path);
+  
+  pushMatrix();
+  pushStyle();
+  float g = map(d, 0, maxD, 255, 0);
+  float r = map(d, 0, maxD, 0, 255);
+
+  fill(r, g, 0);
+  translate(ball.pos.x, ball.pos.y);
+  text(d, 0, 0);
+  popStyle();
+  popMatrix();
 }
 
 void mouseReleased() {
   PVector d = PVector.sub(new PVector(mouseX, mouseY), ball.pos);
   float p = map(d.mag(), 0, width+height, 0, 1);
   d.mult(-0.08);
-  println(d.mag());
+  //println(d.mag());
   if (d.mag() > 7) {
     d.normalize();
     d.mult(7);
@@ -55,17 +80,20 @@ void dottedLine(float x1, float y1, float x2, float y2, float steps) {
 float distanceToPath(PVector location, PVector velocity, Path p) {
   // Predict location 50 (arbitrary choice) frames ahead
   // This could be based on speed 
-  PVector predict = velocity.get();
-  predict.normalize();
-  predict.mult(50);
-  PVector predictLoc = PVector.add(location, predict);
-
+  //  PVector predict = velocity.get();
+  //  predict.normalize();
+  //  predict.mult(50);
+  //  PVector predictLoc = PVector.add(location, predict);
+  PVector predictLoc = location;
   // Now we must find the normal to the path from the predicted location
   // We look at the normal for each line segment and pick out the closest one
 
   PVector normal = null;
   PVector target = null;
   float worldRecord = 1000000;  // Start with a very high record distance that can easily be beaten
+
+  PVector bestNormal = new PVector();
+
 
   // Loop through all points of the path
   for (int i = 0; i < p.points.size ()-1; i++) {
@@ -89,8 +117,18 @@ float distanceToPath(PVector location, PVector velocity, Path p) {
     // Did we beat the record and find the closest line segment?
     if (distance < worldRecord) {
       worldRecord = distance;
+      bestNormal = normalPoint;
     }
   }
+
+  pushStyle();
+  float g = map(worldRecord, 0, maxD, 255, 0);
+  float r = map(worldRecord, 0, maxD, 0, 255);
+
+  stroke(r, g, 0);
+  ellipse(bestNormal.x, bestNormal.y, 4, 4);
+  line(bestNormal.x, bestNormal.y, location.x, location.y);
+  popStyle();
 
   return worldRecord;
 }
