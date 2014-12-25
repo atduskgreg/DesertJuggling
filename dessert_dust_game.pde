@@ -1,8 +1,10 @@
 Ball ball;
 Path path;
 int ballStartX = 100;
-
 int maxD = 200;
+
+int totalLife = 10000;
+int lifeExpended = 0;
 
 
 void setup() {
@@ -37,6 +39,7 @@ void draw() {
   }
 
   float d = distanceToPath(ball.pos, ball.dir, path);
+  lifeExpended += d/20.0;
   
   pushMatrix();
   pushStyle();
@@ -48,6 +51,33 @@ void draw() {
   text(d, 0, 0);
   popStyle();
   popMatrix();
+  
+  drawLifeBar(10,height-30, width-20, 10);
+}
+
+void drawLifeBar(int x, int y, int w, int h){
+  pushStyle();
+  println(lifeExpended);
+  float percentLeft = (float)(totalLife-lifeExpended)/totalLife;
+  
+  if(percentLeft < 0){
+    percentLeft = 0;
+  }
+  println(percentLeft);
+  
+  noStroke();
+  fill(255,0,0);
+  rect(x,y,w,h);
+
+  fill(0,255,0);
+  rect(x,y,w*percentLeft,h);
+  
+  noFill();
+  stroke(0);
+  rect(x,y,w,h);
+  
+  
+  popStyle();
 }
 
 void mouseReleased() {
