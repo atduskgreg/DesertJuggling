@@ -6,6 +6,7 @@ class Ball {
   boolean hit;
   boolean prevHit;
   ArrayList<Dust> dusts;
+  int groundHeight;
 
   Ball(float x, float y) {
     pos = new PVector(x, y);
@@ -13,6 +14,19 @@ class Ball {
     hit = false;
     prevHit = false;
     dusts = new ArrayList<Dust>();
+    groundHeight = 300;
+  }
+
+  void setGroundHeight(int groundHeight){
+    this.groundHeight = groundHeight;
+  }
+  
+  void drawGround(){
+    pushStyle();
+    noStroke();
+    fill(0);
+    rect(0, groundHeight, width, groundHeight);
+    popStyle();
   }
 
   void applyForce(PVector f) {
@@ -22,8 +36,8 @@ class Ball {
   void update() {
     prevHit = hit;
     
-    if (pos.y >= 300 - 2.5) {
-      pos.y = 297;
+    if (pos.y >= groundHeight - 2.5) {
+      pos.y = groundHeight-3;
       dir.y *= -0.5;
       dir.x *= 0.9;
       hit = true;
@@ -34,7 +48,7 @@ class Ball {
     if(hit && !prevHit){
       if(dir.mag() > 1.5){
         int num = (int)map(dir.mag(), 1.5, 7, 1, 30);
-        dusts.add(new Dust(num, pos, dir));
+        dusts.add(new Dust(num, pos, dir, groundHeight));
       }
     }
     
