@@ -16,6 +16,8 @@ float lerpMillis = 1000.0;
 int screenTarget = 500;
 boolean nextScreenBuilt = false;
 
+PFont font;
+
 void setup() {
   size(1000, 500);
   ball = new Ball(ballStartX, height/2);
@@ -28,6 +30,9 @@ void setup() {
   path.addPoint(random(0, width/2), random(0, height));
   path.addPoint(random(width/2, width), random(0, height));
   path.addPoint(width+20, height/2);
+  
+  font = loadFont("AvenirNextCondensed-Heavy-48.vlw");
+  textFont(font, 28);
 }
 
 void keyPressed() {
@@ -63,7 +68,7 @@ void draw() {
   }
 
   float d = distanceToPath(ball.pos, ball.dir, path);
-  lifeExpended += d/20.0;
+  lifeExpended += d/10.0;
 
   pushMatrix();
   pushStyle();
@@ -79,6 +84,8 @@ void draw() {
   popMatrix();
   ball.drawGround();
   drawLifeBar(10, height-30, width-20, 10);
+  fill(0);
+  text("Distance: " + ball.pos.x, 20,40);
 }
 
 void startLerp(){
